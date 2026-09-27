@@ -1,0 +1,9 @@
+# .pluginignore — extra files to leave out of the release zip.
+# One gitignore-like pattern per line: "#" comments, "dir/", "*", "**", "?".
+# These defaults are always excluded, no need to repeat them:
+#   .github/  .gitignore  .gitattributes  .pluginignore  .editorconfig  node_modules/
+#
+# Examples:
+# docs/
+# *.md
+# tests/

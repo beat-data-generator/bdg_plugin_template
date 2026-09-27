@@ -101,8 +101,33 @@ npm run typecheck   # 改动编辑器代码后跑类型检查
 npm run build
 ```
 
+## 发布与插件市场
+
+插件通过 GitHub Release 分发,并登记到官方插件市场索引,即可被应用一键安装。
+
+### 1. 打 tag 发布
+
+`manifest.json` 的 `version` 必须与 tag 一致(tag 形如 `v1.2.3`,可省略 `v` 前缀)。
+打 tag 后组织级工作流会自动打包并创建 Release:
+
+```bash
+git tag v0.1.0
+git push origin v0.1.0
+```
+
+产物是 `plugin.zip`(`manifest.json` 位于压缩包根目录),工作流会打印 SHA-256。
+默认不打包 `.github/`、`.gitignore`、`.gitattributes`、`.pluginignore`、
+`.editorconfig`、`node_modules/`;需要排除更多文件时编辑根目录的 `.pluginignore`。
+
+### 2. 登记到市场
+
+在 [registry](https://github.com/beat-data-generator/registry) 仓库新增
+`plugins/<name>.json`(其中 `id` 必须与本插件 `manifest.json` 的 `id` 完全一致),
+最低宿主版本 `minAppVersion`、分类与标签也在这里声明。合并后,registry 的定时任务
+会读取 Release 资产的 SHA-256 写入 `versions`,插件随后出现在应用内的插件市场中。
+
 ## 许可与发布
 
 - 你编写的插件属于你自己的作品(版权归你),可自行选择开源协议。
 - 宿主编辑器 **Beat Data Generator** 以 **GNU GPL v3** 发布(作者 BUGJI)。插件由宿主加载器装载运行,分发插件时建议注明与宿主的关联。
-- 官方插件模板/脚手架见 <https://github.com/BUGJI/bdg_plugin_template>。
+- 官方插件模板/脚手架见 <https://github.com/beat-data-generator/bdg_plugin_template>。
