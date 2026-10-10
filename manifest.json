@@ -1,6 +1,7 @@
 {
   "id": "dev.bdg.example-basic",
-  "version": "0.2.0",
+  "version": "0.3.0",
+  "apiVersion": 2,
   "name": {
     "zh": "示例插件（基础）",
     "en": "Example Plugin (basic)"

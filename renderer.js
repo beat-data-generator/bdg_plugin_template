@@ -12,7 +12,12 @@
  *   - persisted preferences via api.storage (NOT localStorage)
  *   - renderer <-> main.js round-trips via api.callMain
  *
+ * Targets plugin API v2 (see manifest.json "apiVersion": 2). New in v2:
+ *   - api.ui.notify({ message, type?, durationMs? }) — host toast
+ *   - api.project.markersOfType(typeKey) / tracksOfType() / trackById()
+ *
  * Full API reference: https://github.com/BUGJI/beat_data_generator/blob/main/docs/plugin-api.md
+ * v2 design / migration: https://github.com/BUGJI/beat_data_generator/blob/main/docs/plugin-api-v2.md
  *
  * Note: a panel already contributes ONE entry to the Plugins menu, so this
  * example does not call registerAction to toggle it — keep one menu entry.
@@ -142,15 +147,12 @@ window.__bdgPluginRegister(function activate(api) {
 
   // ---- exporter: typed flip points to CSV ------------------------------
   function runExport() {
-    var s = api.project.snapshot();
+    // v2: query typed-track markers directly; no snapshot join by hand.
+    var points = api.project.markersOfType(flipKey);
     var lines = ["beat,timeMs,direction,power,hold"];
-    for (var i = 0; i < s.markers.length; i++) {
-      var m = s.markers[i];
-      var track = null;
-      for (var j = 0; j < s.tracks.length; j++) {
-        if (s.tracks[j].id === m.trackId) track = s.tracks[j];
-      }
-      if (!track || track.type !== flipKey || !m.attrs) continue;
+    for (var i = 0; i < points.length; i++) {
+      var m = points[i];
+      if (!m.attrs) continue;
       lines.push(
         m.beat +
           "," +
@@ -164,7 +166,7 @@ window.__bdgPluginRegister(function activate(api) {
       );
     }
     if (lines.length === 1) {
-      api.log("exporter: no flip points to export");
+      api.ui.notify({ message: "No flip points to export", type: "warning" });
       return;
     }
     api.system
@@ -178,6 +180,8 @@ window.__bdgPluginRegister(function activate(api) {
         return api.system.writeText(res.filePath, lines.join("\n"));
       })
       .then((ok) => {
+        if (ok)
+          api.ui.notify({ message: "Flip CSV exported", type: "success" });
         api.log("exporter:", ok ? "saved" : "write failed");
       });
   }

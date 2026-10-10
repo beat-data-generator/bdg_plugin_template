@@ -34,7 +34,8 @@ my-plugin/
 ```json
 {
   "id": "dev.bdg.example-basic",
-  "version": "0.1.0",
+  "version": "0.3.0",
+  "apiVersion": 2,
   "name": { "zh": "示例插件", "en": "Example Plugin" },
   "description": { "zh": "…", "en": "…" },
   "main": "main.js",
@@ -43,6 +44,11 @@ my-plugin/
 ```
 
 `name`/`description` 可为字符串或 `{ zh, en }`。`id` 建议反向域名风格且**不得含冒号 `:`**。
+
+**`apiVersion`**(插件接口版本):声明本插件写于哪一版插件 API。省略视为 `1`(历史插件);
+若大于宿主支持的版本,插件会被列出但**不会加载**(设置页给出原因)。当前为 `2`,
+详见 [插件 API v2 设计](https://github.com/BUGJI/beat_data_generator/blob/main/docs/plugin-api-v2.md)。
+`engines.bdg`(可选)声明宿主版本约束,目前仅展示。
 
 ## renderer.js(UI 侧)
 
@@ -67,7 +73,11 @@ window.__bdgPluginRegister(function activate(api) {
 - `api.ui.registerExporter({ label, run })` → 出现在「导出」菜单的“插件导出”分组;
 - `api.ui.registerTimelineOverlay({ id, mount, z? })` → 在时间轴视口内叠加一层(可视化/可拖拽);配合 `api.timeline.*` 换算与 `api.events.on("view", …)` 跟随滚动/缩放;
 - `api.ui.registerBarButton({ id, title, icon?, toggle?, active?, order?, run })` → 在工程栏快捷行加一个小按钮(开关型);
+- `api.ui.notify({ message, type?, durationMs? })` → 宿主内瞬时提示条(`info/success/warning/error`),**替代**自己注入 DOM 造 toast;
 - `api.trackTypes.register({ id, trackName, pointName, color?, fields })` → 新增类型化轨道,侧栏 `＋` 可创建,点在属性卡里编辑字段。
+
+读取类型化轨道的数据用 `api.project.markersOfType(typeKey)` / `tracksOfType(typeKey)` /
+`trackById(id)`,不必再手写 `snapshot()` 过滤与轨道 join。
 
 > **菜单入口只保留一个**:注册面板(`registerPanel`)已自动在「插件」菜单生成一个带开合状态的菜单项,
 > 因此**不要再用 `registerAction` 重复开关同一个面板**。

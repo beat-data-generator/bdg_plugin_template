@@ -19,12 +19,20 @@
  *     ctx.registerHandler("ping", () => "pong"); // reachable via api.callMain
  *     ctx.onDispose(() => {});
  *   };
+ *
+ * API versioning: declare the surface you were written against in manifest.json
+ * as `"apiVersion": 2`. Omitting it means 1 (legacy). A manifest that asks for a
+ * newer version than the host supports is listed but never loaded.
  */
 
-interface LocaText {
-  zh?: string;
-  en?: string;
-  [locale: string]: string | undefined;
+type LocaText =
+  | string
+  | { zh?: string; en?: string; [locale: string]: string | undefined };
+
+/** Optional host-version constraint, e.g. { "bdg": ">=0.4.0" }. */
+interface PluginEngines {
+  bdg?: string;
+  [key: string]: string | undefined;
 }
 
 interface LoopConfig {
@@ -140,6 +148,12 @@ interface PluginApi {
     bpmAtTime: (ms: number) => number;
     timeOfBeat: (beat: number) => number;
     beatOfTime: (ms: number) => number;
+    /** Markers on every track of the given plugin track type `<pluginId>:<id>`. */
+    markersOfType: (typeKey: string) => ProjectSnapshot["markers"];
+    /** Tracks of the given plugin track type `<pluginId>:<id>`. */
+    tracksOfType: (typeKey: string) => ProjectSnapshot["tracks"];
+    /** A single track by id, or null when it does not exist/is hidden. */
+    trackById: (id: string) => ProjectSnapshot["tracks"][number] | null;
     edit: {
       addTrack: (opts?: { name?: string }) => string;
       addTypedTrack: (typeKey: string, name?: string) => string | null;
@@ -283,6 +297,12 @@ interface PluginApi {
      * returned handle's setActive() to drive it programmatically.
      */
     registerBarButton: (def: PluginBarButtonDef) => BarButtonHandle;
+    /** Show a transient toast in the editor. */
+    notify: (opts: {
+      message: string;
+      type?: "info" | "success" | "warning" | "error";
+      durationMs?: number;
+    }) => void;
     openPanel: (uid: number) => void;
     closePanel: (uid: number) => void;
   };
