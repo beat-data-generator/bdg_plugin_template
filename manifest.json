@@ -1,13 +1,13 @@
 {
   "id": "dev.bdg.example-basic",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "name": {
     "zh": "示例插件（基础）",
     "en": "Example Plugin (basic)"
   },
   "description": {
-    "zh": "验证插件宿主加载/启停的最小示例，同时提供 renderer 与 main 两个入口。",
-    "en": "Minimal sample verifying the plugin host load/unload with both a renderer and a main entry."
+    "zh": "覆盖当前插件 API 的示例：类型化轨道、可记忆尺寸的面板、工程栏开关按钮、时间轴叠加层、快捷键、导入/导出、api.storage 与 callMain。",
+    "en": "Example covering the current plugin API: typed track, resizable panel with remembered size, project-bar toggle, timeline overlay, shortcut, import/export, api.storage and callMain."
   },
   "main": "main.js",
   "renderer": "renderer.js"

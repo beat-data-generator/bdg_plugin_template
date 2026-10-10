@@ -1,7 +1,14 @@
-# Beat Data Generator 插件系统
+# Beat Data Generator 插件模板
+
+本仓库是 [Beat Data Generator](https://github.com/BUGJI/beat_data_generator) 的官方插件模板/脚手架。
+仓库内的 `renderer.js` 是一份**可直接运行的完整示例**,覆盖当前插件 API 的主要能力;`main.js`
+是主进程入口的最小骨架。基于本模板开发时,改掉 `manifest.json` 的 `id` / `name` 与入口脚本即可。
+
+> 完整的接口清单(命名空间 / 方法 / 类型 / 示例)见宿主仓库的
+> [**插件 API 参考**](https://github.com/BUGJI/beat_data_generator/blob/main/docs/plugin-api.md)。
 
 插件用于扩展踩点编辑器:导入/导出新格式、数据生成与批量编辑、侧栏浮动静默面板、
-自定义快捷键、独立预览窗口,以及针对特定游戏新增“类型化轨道”(如翻转事件),
+时间轴叠加层、自定义快捷键、独立预览窗口,以及针对特定游戏新增“类型化轨道”(如翻转事件),
 它们与内置踩点共用同一条节拍时间轴。
 
 ## 插件形态
@@ -54,11 +61,16 @@ window.__bdgPluginRegister(function activate(api) {
 可以注册的贡献:
 
 - `api.ui.registerAction({ label, run })` → 出现在顶部「插件」菜单;
-- `api.ui.registerPanel({ id, title, mount })` → 浮动静默窗口(可拖动、右下角可缩放),`mount(hostEl)` 里用 DOM 自由渲染,返回可选清理函数;返回 `PanelHandle` 可 `open()/toggle()` 等;
+- `api.ui.registerPanel({ id, title, mount, defaultWidth?, defaultHeight?, minWidth?, minHeight? })` → 浮动静默窗口(可拖动、右下角可缩放),`mount(hostEl)` 里用 DOM 自由渲染,返回可选清理函数;返回 `PanelHandle` 可 `open()/toggle()` 等。**窗口位置与尺寸按「插件 + 面板 id」自动记忆**并重启恢复,`defaultWidth/Height` 为首次打开的初始尺寸;
 - `api.ui.registerShortcut({ id, label, combo, run })` → `combo` 形如 `Alt+1`、`Ctrl+Shift+F`;
 - `api.ui.registerImporter({ label, run })` → 出现在「文件 → 导入…」;
 - `api.ui.registerExporter({ label, run })` → 出现在「导出」菜单的“插件导出”分组;
+- `api.ui.registerTimelineOverlay({ id, mount, z? })` → 在时间轴视口内叠加一层(可视化/可拖拽);配合 `api.timeline.*` 换算与 `api.events.on("view", …)` 跟随滚动/缩放;
+- `api.ui.registerBarButton({ id, title, icon?, toggle?, active?, order?, run })` → 在工程栏快捷行加一个小按钮(开关型);
 - `api.trackTypes.register({ id, trackName, pointName, color?, fields })` → 新增类型化轨道,侧栏 `＋` 可创建,点在属性卡里编辑字段。
+
+> **菜单入口只保留一个**:注册面板(`registerPanel`)已自动在「插件」菜单生成一个带开合状态的菜单项,
+> 因此**不要再用 `registerAction` 重复开关同一个面板**。
 
 ## main.js(主进程侧)
 
@@ -86,13 +98,18 @@ module.exports = function activate(ctx) {
 
 编辑器渲染层是沙箱(`sandbox:true` + `contextIsolation`)。插件拿到的是受限桥接:
 
-- 数据/编辑/播放/选区/事件、`api.system.pickFile/saveFile/readText/writeText`、`openWindow(加载任意页面)`、`api.system.audioPath()`(当前加载音频的绝对路径，便于 main.js 用 Node 读取并打包)、`callMain`;
+- 数据/编辑/播放/选区/事件、`api.timeline.*`(只读时间轴换算)、
+  `api.system.pickFile/saveFile/readText/writeText/readBytes/writeBytes`、
+  `openWindow(加载任意页面)`、`api.system.audioPath()`(当前加载音频的绝对路径,便于 main.js 用 Node 读取并打包)、`callMain`;
+- **音频能力**:`api.audio.getBuffer` / `encodeWav` / `replaceFromBytes`(编码 WAV、解码并替换当前音频;替换不进入撤销栈);
+- **持久化**:`api.storage.get/set/remove/all/clear` —— 按插件隔离、由主进程落盘的键值库(同步读写,**替代 `localStorage`**);
 - 需要任意 Node 能力时让插件自带 `main.js` 处理。本系统**不弹权限确认**,安装插件即视为信任。
 
-## 示例
+## 本模板示例覆盖
 
-`plugins/example-basic` 覆盖:面板、动作、快捷键、导入/导出、main 往返调用、类型化轨道注册。
-开发时把工程目录当扫描根即可(见上),发布则把插件放入 `<userData>/plugins`。
+本仓库的 `renderer.js` 一个文件演示了:类型化轨道、可记忆尺寸的面板、工程栏开关按钮、
+时间轴叠加层(跟随播放头 + `view` 事件)、快捷键、导入/导出、`api.storage` 与 `callMain`。
+开发时把本目录放进插件扫描根即可(用户目录 `<userData>/plugins/`,或宿主工程根目录的 `plugins/`)。
 
 ## 常用命令
 
